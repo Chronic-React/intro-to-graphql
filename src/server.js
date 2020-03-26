@@ -11,16 +11,50 @@ const types = ['product', 'coupon', 'user']
 
 export const start = async () => {
   const rootSchema = `
+
+    interface Animal {
+      species: String!
+    }
+    
+    type Tiger implements Animal {
+      species: String!
+      stripeCount: Int
+    }
+
+    type Lion implements Animal {
+      species: String!
+      mainColour: String
+    }
+
+    type Query {
+      animals: [Animal]!
+    }
+
     schema {
       query: Query
-      mutation: Mutation
     }
   `
-  const schemaTypes = await Promise.all(types.map(loadTypeSchema))
+  // const schemaTypes = await Promise.all(types.map(loadTypeSchema))
 
   const server = new ApolloServer({
-    typeDefs: [rootSchema, ...schemaTypes],
-    resolvers: merge({}, product, coupon, user),
+    typeDefs: [rootSchema],
+    resolvers: {
+      Query: {
+        animals() {
+          return [
+            { species: 'Tiger', stripeCount: 2 },
+            { species: 'Lion', mainColour: 'red' }
+          ]
+        }
+      },
+      Animal: {
+        // What is this interface resolving to!?
+        __resolveType(animal) {
+          return animal.species
+        }
+      }
+    },
+
     context({ req }) {
       // use the authenticate function from utils to auth req, its Async!
       return { user: null }
